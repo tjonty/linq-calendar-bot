@@ -1,6 +1,6 @@
 # Linq Calendar Bot 📅
 
-**Conversational Scheduling via iMessage, RCS, and SMS — No UI Required**
+**Conversational Scheduling via iMessage, RCS, and SMS - No UI Required**
 
 Schedule meetings entirely inside a messaging thread using natural language.  
 Built on top of the Linq Partner API (V3), this bot allows users to book meetings conversationally and receive a real `.ics` calendar invite directly in chat.
