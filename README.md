@@ -1,47 +1,133 @@
-# Linq Calendar Bot
+# Linq Calendar Bot 📅
 
-Node.js webhook bot for Linq that:
-- receives incoming chat messages
-- walks users through a simple booking flow
-- parses natural-language time text
-- generates a `.ics` calendar invite
-- sends the invite back as a media URL
+**Conversational Scheduling via iMessage, RCS, and SMS — No UI Required**
 
-## Tech Stack
+Schedule meetings entirely inside a messaging thread using natural language.  
+Built on top of the Linq Partner API (V3), this bot allows users to book meetings conversationally and receive a real `.ics` calendar invite directly in chat.
+
+---
+
+## 🎬 Demo Video
+
+Watch the project in action:  
+👉 https://youtu.be/YOUR_VIDEO_LINK
+
+---
+
+## 🚀 What This Project Does
+
+Users can send messages like:
+
+> "Tue 4:30pm for 15 minutes CT"
+
+The bot will:
+
+1. Parse the natural language date/time
+2. Normalize timezone correctly
+3. Confirm the booking
+4. Generate a valid `.ics` calendar invite
+5. Send the invite back directly in the conversation
+
+All without leaving iMessage, RCS, or SMS.
+
+---
+
+## 🧠 Why This Is Interesting
+
+Most scheduling tools require users to:
+- Click external booking links
+- Fill out forms
+- Leave the conversation context
+
+This project turns messaging itself into the scheduling interface.
+
+It demonstrates:
+
+- Event-driven webhook architecture
+- Secure HMAC webhook verification
+- Conversational state machine design
+- Natural language time parsing
+- Timezone-safe calendar generation
+- Media attachment delivery via API
+
+---
+
+## 🏗️ Architecture Overview
+
+```
+User
+  ↓
+Linq Messaging Platform
+  ↓ (webhook: message.received)
+Express Server
+  ↓
+Signature Verification (HMAC SHA-256)
+  ↓
+Conversation State Machine
+  ↓
+Natural Language Time Parsing
+  ↓
+ICS Calendar Generation
+  ↓
+Linq Message API (media attachment)
+  ↓
+User receives calendar invite
+```
+
+---
+
+## 🛠 Tech Stack
 
 - Node.js (ESM modules)
 - Express
 - Axios
-- chrono-node
-- Luxon
+- chrono-node (natural language parsing)
+- Luxon (timezone handling + UTC normalization)
+- Linq Partner API (V3)
+- ngrok (local webhook exposure)
 
-## Project Structure
+---
 
-- `src/index.js`: Express server, webhook handler, invite hosting route
-- `src/bot.js`: conversational state machine (`idle -> collecting -> confirming`)
-- `src/timeParse.js`: natural language date/time + duration parsing
-- `src/ics.js`: ICS file generation
-- `src/linq.js`: Linq API client wrappers
-- `src/webhookVerify.js`: HMAC signature verification for webhooks
+## 📂 Project Structure
 
-## Prerequisites
+```
+src/
+  index.js            # Express server + webhook handler
+  bot.js              # Conversational state machine
+  timeParse.js        # Natural language time + duration parsing
+  ics.js              # ICS calendar generation
+  linq.js             # Linq API client wrapper
+  webhookVerify.js    # HMAC webhook signature verification
+```
 
-- Node.js 18+ (Node 20+ recommended)
-- npm
-- ngrok (for local public webhook URL)
-- Linq partner credentials and webhook subscription
+---
 
-## Installation
+## 🔐 Security Model
+
+Webhook verification includes:
+
+- HMAC SHA-256 validation over `${timestamp}.${rawBody}`
+- Strict raw body usage (no re-stringifying JSON)
+- 5-minute replay window protection
+- Environment-based secret storage
+
+Invalid signatures immediately return `401`.
+
+---
+
+## 📦 Installation
 
 ```bash
 npm install
 ```
 
-## Environment Variables
+---
 
-Create `.env` in the project root:
+## ⚙️ Environment Variables
 
-```bash
+Create a `.env` file:
+
+```env
 PORT=3000
 LINQ_API_BASE=https://api.linqapp.com/api/partner/v3
 LINQ_TOKEN=your_linq_api_token
@@ -50,12 +136,15 @@ PUBLIC_BASE_URL=https://your-ngrok-domain.ngrok-free.dev
 ```
 
 Notes:
-- `PUBLIC_BASE_URL` must be publicly reachable over HTTPS.
-- Keep `LINQ_TOKEN` and `LINQ_WEBHOOK_SIGNING_SECRET` secret.
 
-## Run Locally
+- `PUBLIC_BASE_URL` must be publicly reachable via HTTPS.
+- Never commit `LINQ_TOKEN` or `LINQ_WEBHOOK_SIGNING_SECRET`.
 
-Start the app:
+---
+
+## ▶️ Run Locally
+
+Start server:
 
 ```bash
 npm start
@@ -67,12 +156,14 @@ Health check:
 curl http://localhost:3000/health
 ```
 
-## Expose Local Server with ngrok
+---
 
-1. Authenticate ngrok once:
+## 🌍 Expose Server with ngrok
+
+1. Authenticate ngrok:
 
 ```bash
-ngrok config add-authtoken <YOUR_NGROK_AUTHTOKEN>
+ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
 ```
 
 2. Start tunnel:
@@ -81,62 +172,98 @@ ngrok config add-authtoken <YOUR_NGROK_AUTHTOKEN>
 ngrok http 3000
 ```
 
-3. Copy the HTTPS forwarding URL into `.env` as `PUBLIC_BASE_URL`.
+3. Copy HTTPS forwarding URL into `.env` as `PUBLIC_BASE_URL`.
 
-## Configure Linq Webhook
+---
 
-Point your Linq webhook subscription URL to:
+## 🔗 Configure Linq Webhook
 
-`https://<your-public-url>/webhooks/linq`
+Set webhook URL in Linq to:
 
-Ensure the signing secret from Linq matches `LINQ_WEBHOOK_SIGNING_SECRET`.
+```
+https://<your-public-url>/webhooks/linq
+```
 
-## Booking Flow
+Ensure the webhook signing secret matches your `.env` value.
 
-1. User sends message containing `book`, `schedule`, or `demo`.
-2. Bot asks for day/time, duration, and timezone.
-3. User replies with details.
-4. Bot asks for confirmation (`YES`).
-5. On confirmation, app parses the details, creates an ICS invite, and sends a message with the invite URL.
+---
 
-## Endpoints
+## 📅 Booking Flow
 
-- `GET /health` -> `{ "ok": true }`
-- `POST /webhooks/linq` -> webhook receiver (expects raw body for signature validation)
-- `GET /invites/:id.ics` -> serves generated invite from in-memory store
+1. User sends message containing `book`, `schedule`, or `demo`
+2. Bot asks for day/time, duration, and timezone
+3. User replies with details
+4. Bot asks for confirmation (`YES`)
+5. On confirmation:
+   - Parse date/time
+   - Convert to UTC
+   - Generate `.ics`
+   - Send media message with invite URL
 
-## Important Behavior
+---
 
-- Webhook verification uses HMAC SHA-256 over `${timestamp}.${rawBody}`.
-- Timestamps older than 5 minutes are rejected.
-- Invite storage is in-memory (`Map`), so invite URLs are lost on restart.
+## 📡 API Endpoints
 
-## Troubleshooting
+| Method | Endpoint | Description |
+|--------|----------|------------|
+| GET | `/health` | Health check |
+| POST | `/webhooks/linq` | Webhook receiver (raw body required) |
+| GET | `/invites/:id.ics` | Serves generated ICS invite |
 
-- `Cannot use import statement outside a module`
-  - Ensure `package.json` includes `"type": "module"`.
+---
 
-- `chrono-node does not provide an export named 'default'`
-  - Use `import * as chrono from "chrono-node";`.
+## 🧪 Troubleshooting
 
-- `zsh: command not found: ngrok`
-  - Install ngrok (for Homebrew users): `brew install ngrok/ngrok/ngrok`
+### Webhook returns `401 invalid signature`
+- Ensure `express.raw()` is used for webhook route
+- Confirm signing secret matches Linq
+- Confirm server clock is accurate
 
-- Webhook returns `401 invalid signature`
-  - Confirm raw body is used (`express.raw(...)` on webhook route).
-  - Confirm `LINQ_WEBHOOK_SIGNING_SECRET` exactly matches Linq config.
-  - Confirm server clock is accurate (5-minute replay window).
+### Date/time incorrect
+- Ensure timezone mapping in `timeParse.js`
+- Verify UTC conversion before ICS generation
 
-## Limitations
+### ngrok not found
+Install via Homebrew:
 
-- Conversation and invite state are not persistent (memory only).
-- No retries/backoff around outbound Linq API calls.
-- Time parsing is heuristic and currently US-timezone focused.
-- ICS generation is minimal and can be extended with organizer/attendees/alarms.
+```bash
+brew install ngrok/ngrok/ngrok
+```
 
-## Next Improvements
+---
 
-1. Persist chat state and invite files (Redis/DB/object storage).
-2. Add structured logging and error tracking.
-3. Add unit tests for parsing, webhook verification, and ICS formatting.
-4. Add stricter validation for webhook payload schema.
+## ⚠️ Limitations
+
+- In-memory state (lost on restart)
+- No persistence layer
+- No retry/backoff for outbound API calls
+- Time parsing optimized for US timezones
+- ICS file minimal (no organizer/attendee metadata)
+
+---
+
+## 🔮 Future Improvements
+
+- Persistent storage (Redis / PostgreSQL)
+- Structured logging + tracing
+- Multi-slot suggestions (reply 1/2/3)
+- Reschedule & cancel flow
+- Delivery/read receipt-based reminders
+- Proper ICS attendee + alarm support
+- Dockerized deployment
+
+---
+
+## 👨‍💻 Author
+
+Developed by Jonty Tejani  
+Building secure, event-driven AI & messaging systems.
+
+More Projects: Jontytejani.com
+LinkedIn: https://www.linkedin.com/in/jontytejani/
+
+---
+
+## 🏷 Tags
+
+#LinqAPI #NodeJS #Webhooks #iMessageAPI #SMSAutomation #CalendarBot #ExpressJS #JavaScript #ConversationalAI
