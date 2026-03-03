@@ -259,7 +259,7 @@ brew install ngrok/ngrok/ngrok
 Developed by Jonty Tejani  
 Building secure, event-driven AI & messaging systems.
 
-More Projects: Jontytejani.com
+More Projects: https://www.Jontytejani.com  
 LinkedIn: https://www.linkedin.com/in/jontytejani/
 
 ---
