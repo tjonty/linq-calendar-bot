@@ -10,7 +10,7 @@ Built on top of the Linq Partner API (V3), this bot allows users to book meeting
 ## 🎬 Demo Video
 
 Watch the project in action:  
-👉 https://youtu.be/YOUR_VIDEO_LINK
+👉 https://youtu.be/XQsEoFF3CNs
 
 ---
 
